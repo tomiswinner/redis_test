@@ -18,6 +18,7 @@ func main() {
 
 	// azure 用
 	// password = アクセスキー
+	// https://learn.microsoft.com/ja-jp/azure/azure-cache-for-redis/cache-go-get-started
 	// redisHost := os.Getenv("REDIS_HOST")
 	// redisHost = redisHost + ":6380"
 	// redisPassword := os.Getenv("REDIS_PASSWORD")
