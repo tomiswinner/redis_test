@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -10,13 +11,32 @@ import (
 var ctx = context.Background()
 
 func main() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	// local docker 用
+	redisHost := "localhost:6379"
+	redisPassword := ""
+	op := &redis.Options{Addr: redisHost, Password: redisPassword}
 
-	err := rdb.Set(ctx, "key1", "value111", 0).Err()
+	// azure 用
+	// password = アクセスキー
+	// redisHost := os.Getenv("REDIS_HOST")
+	// redisHost = redisHost + ":6380"
+	// redisPassword := os.Getenv("REDIS_PASSWORD")
+	// op := &redis.Options{Addr: redisHost, Password: redisPassword, TLSConfig: &tls.Config{MinVersion: tls.VersionTLS12}}
+
+	fmt.Println("ホスト名：", redisHost)
+	fmt.Println("パスワード：", redisPassword)
+
+	// Redis クライアントを作成
+	rdb := redis.NewClient(op)
+
+	// Ping で接続を確認
+	err := rdb.Ping(ctx).Err()
+	if err != nil {
+		log.Fatalf("failed to connect with redis instance at %s - %v", redisHost, err)
+	}
+
+	// DB にデータをセットし、取得する
+	err = rdb.Set(ctx, "key1", "value111", 0).Err()
 	if err != nil {
 		panic(err)
 	}
@@ -28,16 +48,19 @@ func main() {
 	}
 	fmt.Println("key1 value is", val)
 
-	val2, err := rdb.Get(ctx, "key2").Result()
-	if err == redis.Nil {
-		fmt.Println("key2 does not exist")
-	} else if err != nil {
-		panic(err)
-	} else {
-		fmt.Println("key2", val2)
-	}
-	// Output: key value
-	// key2 does not exist
+	// DBにないkeyを取得しようとするとエラーが出る
+	// val2, err := rdb.Get(ctx, "key2").Result()
+	// if err == redis.Nil {
+	// 	fmt.Println("key2 does not exist")
+	// } else if err != nil {
+	// 	panic(err)
+	// } else {
+	// 	fmt.Println("key2", val2)
+	// }
+	// // Output: key value
+	// // key2 does not exist
+
+	// DBの中身を全て表示
 	keys, err := rdb.Keys(ctx, "*").Result()
 	if err != nil {
 		panic(err)
